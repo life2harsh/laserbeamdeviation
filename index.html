@@ -1,24 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Laser Beam Divergence Simulation</title>
   <style>
-    body { display: flex; flex-direction: column; align-items: center; margin: 0; font-family: Arial, sans-serif; background: #111; color: #fff; }
-    h1 { margin: 1em 0 0.5em; }
-    #simulation { display: flex; gap: 2em; }
-    canvas { background: #000; border: 1px solid #444; }
-    #controls { margin: 1em; display: flex; gap: 1em; align-items: center; }
-    input[type=range] { width: 150px; }
-    label { font-size: 0.9em; }
-    button { background: #333; color: #fff; border: 1px solid #666; padding: 0.5em 1em; cursor: pointer; }
-    button:hover { background: #444; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 1em;
+    }
+
+    h1 {
+      margin: 1em 0 0.5em;
+      text-align: center;
+    }
+
+    #info {
+      margin-bottom: 1em;
+      font-size: 1.1em;
+    }
+
+    #simulation {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2em;
+    }
+
+    canvas {
+      background: #000;
+      border: 1px solid #444;
+      max-width: 90vw;
+      height: auto;
+    }
+
+    #controls {
+      margin: 1em;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+      justify-content: center;
+      align-items: center;
+    }
+
+    input[type=range] {
+      width: 150px;
+    }
+
+    label {
+      font-size: 0.9em;
+    }
+
+    button {
+      padding: 0.4em 1em;
+      background: #333;
+      color: white;
+      border: 1px solid #666;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #444;
+    }
   </style>
 </head>
 <body>
   <h1>Laser Beam Divergence</h1>
-  <div id="info">z = <span id="zValue">0.0</span> mm</div>
+
+  <div id="info">
+    z = <span id="zValue">0.0</span> mm |
+    w(z) = <span id="wValue">0.0000</span> mm
+  </div>
 
   <div id="simulation">
     <canvas id="beamCanvas" width="400" height="400"></canvas>
@@ -30,7 +89,7 @@
     <input type="range" id="slider" min="0" max="500" value="0">
 
     <label>Speed:</label>
-    <input type="range" id="speedSlider" min="1" max="20" value="2">
+    <input type="range" id="speedSlider" min="1" max="20" value="1">
 
     <button id="pauseBtn">Pause</button>
   </div>
@@ -50,31 +109,25 @@
     const zValues = [];
     for (let i = 0; i <= steps; i++) {
       const z = i * 5 * zR / steps;
-      sizes.push(w0 * Math.sqrt(1 + (z / zR) ** 2));
-      zValues.push(z * 1e3); // in mm
+      sizes.push(w0 * Math.sqrt(1 + (z/zR)**2));
+      zValues.push(z * 1e3); // mm
     }
 
     function drawAxes() {
       graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
       graphCtx.strokeStyle = '#555';
       graphCtx.lineWidth = 1;
-
-      // x-axis
       graphCtx.beginPath();
       graphCtx.moveTo(40, graphCanvas.height - 40);
       graphCtx.lineTo(graphCanvas.width - 20, graphCanvas.height - 40);
-
-      // y-axis
       graphCtx.moveTo(40, 20);
       graphCtx.lineTo(40, graphCanvas.height - 40);
       graphCtx.stroke();
-
-      // labels
       graphCtx.fillStyle = '#aaa';
-      graphCtx.fillText('z (mm)', graphCanvas.width / 2, graphCanvas.height - 10);
+      graphCtx.fillText('z (mm)', graphCanvas.width/2, graphCanvas.height - 10);
       graphCtx.save();
-      graphCtx.translate(10, graphCanvas.height / 2);
-      graphCtx.rotate(-Math.PI / 2);
+      graphCtx.translate(10, graphCanvas.height/2);
+      graphCtx.rotate(-Math.PI/2);
       graphCtx.fillText('w(z) ×1e3 (mm)', 0, 0);
       graphCtx.restore();
     }
@@ -86,11 +139,19 @@
       graphCtx.beginPath();
       for (let i = 0; i <= idx; i++) {
         const x = 40 + (graphCanvas.width - 60) * (i / steps);
-        const y = graphCanvas.height - 40 - (graphCanvas.height - 60) * ((sizes[i] * 1e3) / (sizes[steps] * 1e3));
+        const y = graphCanvas.height - 40 - (graphCanvas.height - 60) * ((sizes[i]*1e3) / ((sizes[steps]*1e3)));
         if (i === 0) graphCtx.moveTo(x, y);
         else graphCtx.lineTo(x, y);
       }
       graphCtx.stroke();
+
+      // Draw current value dot
+      const x = 40 + (graphCanvas.width - 60) * (idx / steps);
+      const y = graphCanvas.height - 40 - (graphCanvas.height - 60) * ((sizes[idx]*1e3) / ((sizes[steps]*1e3)));
+      graphCtx.fillStyle = 'red';
+      graphCtx.beginPath();
+      graphCtx.arc(x, y, 4, 0, 2*Math.PI);
+      graphCtx.fill();
     }
 
     function drawBeam(i) {
@@ -107,12 +168,13 @@
       grad.addColorStop(1, 'rgba(0,0,50,0)');
 
       beamCtx.fillStyle = grad;
-      beamCtx.fillRect(center - radius, center - radius, radius * 2, radius * 2);
+      beamCtx.fillRect(center - radius, center - radius, radius*2, radius*2);
     }
 
     const slider = document.getElementById('slider');
     const speedSlider = document.getElementById('speedSlider');
     const zValueLabel = document.getElementById('zValue');
+    const wValueLabel = document.getElementById('wValue');
     const pauseBtn = document.getElementById('pauseBtn');
 
     slider.addEventListener('input', () => updateFrame(+slider.value));
@@ -120,16 +182,12 @@
     let idx = 0;
     let isPaused = false;
 
-    pauseBtn.addEventListener('click', () => {
-      isPaused = !isPaused;
-      pauseBtn.textContent = isPaused ? '▶' : '⏸︎';
-    });
-
     function updateFrame(i) {
       idx = i;
       drawBeam(idx);
       drawGraph(idx);
       zValueLabel.textContent = zValues[idx].toFixed(1);
+      wValueLabel.textContent = (sizes[idx] * 1e3).toFixed(4);
     }
 
     function animate() {
@@ -141,6 +199,11 @@
       }
       requestAnimationFrame(animate);
     }
+
+    pauseBtn.addEventListener('click', () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Play' : 'Pause';
+    });
 
     drawAxes();
     updateFrame(0);
